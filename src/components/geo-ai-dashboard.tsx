@@ -95,7 +95,7 @@ export default function GeoAIDashboard() {
     setMapLoaded(true)
   }, [])
 
-  const API_BASE_URL = "http://127.0.0.1:8000"
+  const API_BASE_URL = "https://orbis-nik-backend.onrender.com"
 
   const showError = (message: string) => {
     setError(message)
