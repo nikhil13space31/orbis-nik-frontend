@@ -95,7 +95,7 @@ export default function GeoAIDashboard() {
     setMapLoaded(true)
   }, [])
 
-  const API_BASE_URL = "https://orbis-nik-backend.onrender.com"
+  const API_BASE_URL = "https://orbis-nik-backend-864057882351.asia-south1.run.app"
 
   const showError = (message: string) => {
     setError(message)
