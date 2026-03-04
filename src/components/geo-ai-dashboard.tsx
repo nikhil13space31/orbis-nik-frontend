@@ -178,7 +178,7 @@ export default function GeoAIDashboard() {
     }
     
     try {
-      const response = await fetch("https://orbis-nik-backend-864057882351.asia-south1.run.app/api/ask", {
+      const response = await fetch("https://orbis-nik-backend-864057882351.asia-south1.run.app/api/ask/analyze", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
