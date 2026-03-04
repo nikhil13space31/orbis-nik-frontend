@@ -105,40 +105,43 @@ export default function GeoAIDashboard() {
     setLoading(true)
     setError(null)
     setResult(null)
-    setRawJson("") // Clear previous raw JSON
+    
+    // Let the user know it's a heavy task
+    setRawJson("Processing high-resolution imagery... This can take up to 3 minutes. Please do not close this window.") 
 
     try {
-      const response = await fetch("/api/ask", {
+      // 🚨 BYPASS VERCEL: Call Cloud Run directly
+      const response = await fetch("https://orbis-nik-backend-864057882351.asia-south1.run.app/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: naturalQuery }),
       })
 
-      // If the Next.js API returned a standard JSON error (like a 500 status)
+      const responseText = await response.text()
+      let data;
+      
+      try {
+        data = JSON.parse(responseText)
+      } catch (parseError) {
+        throw new Error("Server returned an invalid response. Check Cloud Run logs.")
+      }
+
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.detail || "Failed to process query");
+        throw new Error(data.detail || data.error || "Failed to process query")
       }
 
-      // Handle the streaming response for the live typing effect
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let streamedText = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          // Decode the chunk and append it
-          streamedText += decoder.decode(value, { stream: true });
-          setRawJson(streamedText); // Live typing update
-        }
+      // Simulate the live typing effect locally without needing a stream
+      const jsonString = JSON.stringify(data, null, 2);
+      setRawJson(""); 
+      
+      // Fast chunked typing effect to prevent React performance lag
+      let currentText = "";
+      const chunkSize = 20; 
+      for (let i = 0; i < jsonString.length; i += chunkSize) {
+        currentText += jsonString.slice(i, i + chunkSize);
+        setRawJson(currentText);
+        await new Promise(r => setTimeout(r, 10)); 
       }
-
-      // 🚨 CRITICAL STEP: The stream is finished. Now we parse the complete string 
-      // back into a JSON object so we can extract the map coordinates and images.
-      const data = JSON.parse(streamedText);
 
       setResult(data.analysis_result)
       setMapCenter(data.analysis_result.output_map.center_coords)
@@ -175,7 +178,7 @@ export default function GeoAIDashboard() {
     }
     
     try {
-      const response = await fetch("/api/analyze", {
+      const response = await fetch("https://orbis-nik-backend-864057882351.asia-south1.run.app/api/ask", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
