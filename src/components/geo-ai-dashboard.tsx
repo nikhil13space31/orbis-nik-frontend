@@ -130,16 +130,15 @@ export default function GeoAIDashboard() {
         throw new Error(data.detail || data.error || "Failed to process query")
       }
 
-      // Simulate the live typing effect locally without needing a stream
-      const jsonString = JSON.stringify(data, null, 2);
-      setRawJson(""); 
-      
-      // Fast chunked typing effect to prevent React performance lag
-      let currentText = "";
-      const chunkSize = 20; 
-      for (let i = 0; i < jsonString.length; i += chunkSize) {
-        currentText += jsonString.slice(i, i + chunkSize);
-        setRawJson(currentText);
+      // 1. Clear the "Processing..." loading text to hide raw data
+    setRawJson(""); 
+
+    // 2. Extract the map data safely (Gemini wraps it in 'analysis_result')
+    if (data.analysis_result) {
+      setResult(data.analysis_result); 
+    } else {
+      setResult(data);
+    }
         await new Promise(r => setTimeout(r, 10)); 
       }
 
