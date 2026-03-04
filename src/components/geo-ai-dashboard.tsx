@@ -294,15 +294,6 @@ export default function GeoAIDashboard() {
                           ))}
                         </div>
                       </div>
-                      
-                      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                        <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">
-                          ⚠️ Backend Required
-                        </p>
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                          This is a frontend demo. To see live results, run the backend server at <code className="bg-yellow-100 dark:bg-yellow-900 px-1 rounded">http://127.0.0.1:8000</code>
-                        </p>
-                      </div>
                     </div>
                   </DialogDescription>
                 </DialogHeader>
