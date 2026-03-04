@@ -639,17 +639,6 @@ export default function GeoAIDashboard() {
                       </Tabs>
                     </div>
                   )}
-
-                  {/* Raw JSON */}
-                  <div>
-                    <h3 className="text-lg font-semibold flex items-center gap-2 mb-3 text-slate-800 dark:text-slate-100">
-                      <Code className="w-5 h-5 text-cyan-400" />
-                      Raw JSON Response
-                    </h3>
-                    <pre className="whitespace-pre-wrap bg-black/10 dark:bg-black/40 p-4 rounded-lg overflow-x-auto text-sm font-mono text-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
-                      {rawJson}
-                      </pre>
-                  </div>
                 </CardContent>
               </Card>
             </div>
