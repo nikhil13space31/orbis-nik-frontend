@@ -112,7 +112,7 @@ export default function GeoAIDashboard() {
     try {
       // 🚨 BYPASS VERCEL: Call Cloud Run directly
       const response = await fetch("https://orbis-nik-backend-864057882351.asia-south1.run.app/api/ask", {
-        method: "POST",
+        method: "POST", // 👈 Make sure this line exists!
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: naturalQuery }),
       })
@@ -179,11 +179,10 @@ export default function GeoAIDashboard() {
     
     try {
       const response = await fetch("https://orbis-nik-backend-864057882351.asia-south1.run.app/api/analyze", {
-        method: 'POST',
+        method: 'POST', // 👈 Make sure this line exists!
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
       })
-      
       const data = await response.json()
       
       if (!response.ok) {
