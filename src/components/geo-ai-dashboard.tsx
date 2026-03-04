@@ -94,7 +94,8 @@ export default function GeoAIDashboard() {
   useEffect(() => {
     setMapLoaded(true)
   }, [])
-  const API_BASE_URL = "https://orbis-nik-backend-864057882351.asia-south1.run.app"
+  fetch("/api/ask")
+  fetch("/api/analyze")
 
   const showError = (message: string) => {
     setError(message)
@@ -102,22 +103,48 @@ export default function GeoAIDashboard() {
   }
 
   const handleAskGemini = async () => {
-    if (!naturalQuery.trim()) {
-      showError("Please enter a natural language query.")
-      return
+  if (!naturalQuery.trim()) {
+    showError("Please enter a natural language query.");
+    return;
+  }
+
+  setActiveTab("gemini");
+  setLoading(true);
+  setError(null);
+  setResult(null);
+
+  try {
+    const response = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: naturalQuery }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Failed to process query");
     }
-    
-    setActiveTab('gemini')
-    setLoading(true)
-    setError(null)
-    setResult(null)
-    
-    try {
-  const response = await fetch("/api/ask", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: naturalQuery }),
-  });
+
+    setResult(data.analysis_result);
+    setRawJson(data);
+    setMapCenter(data.analysis_result.output_map.center_coords);
+    setMapZoom(10);
+    setCustomTileUrl(data.analysis_result.output_map.tile_url);
+
+    const params = data.parsed_parameters;
+    setLon(params.lon);
+    setLat(params.lat);
+    setStartDate(params.start_date);
+    setEndDate(params.end_date);
+    setAnalysisType(params.analysis_type);
+  } catch (err: any) {
+    showError(err.message || "An error occurred");
+    setRawJson({ error: err.message });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const data = await response.json();
   console.log(data);
@@ -167,7 +194,7 @@ export default function GeoAIDashboard() {
     }
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+      const response = await fetch("/api/analyze", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
