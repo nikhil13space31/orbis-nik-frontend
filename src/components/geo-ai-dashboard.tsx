@@ -113,11 +113,17 @@ export default function GeoAIDashboard() {
     setResult(null)
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: naturalQuery })
-      })
+  const response = await fetch("/api/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: naturalQuery }),
+  });
+
+  const data = await response.json();
+  console.log(data);
+} catch (error) {
+  console.error("Error:", error);
+}
 
       const data = await response.json()
       
