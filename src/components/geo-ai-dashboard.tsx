@@ -94,8 +94,6 @@ export default function GeoAIDashboard() {
   useEffect(() => {
     setMapLoaded(true)
   }, [])
-  fetch("/api/ask")
-  fetch("/api/analyze")
 
   const showError = (message: string) => {
     setError(message)
@@ -103,79 +101,42 @@ export default function GeoAIDashboard() {
   }
 
   const handleAskGemini = async () => {
-  if (!naturalQuery.trim()) {
-    showError("Please enter a natural language query.");
-    return;
-  }
+    setActiveTab('gemini')
+    setLoading(true)
+    setError(null)
+    setResult(null)
 
-  setActiveTab("gemini");
-  setLoading(true);
-  setError(null);
-  setResult(null);
-
-  try {
-    const response = await fetch("/api/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: naturalQuery }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || "Failed to process query");
-    }
-
-    setResult(data.analysis_result);
-    setRawJson(data);
-    setMapCenter(data.analysis_result.output_map.center_coords);
-    setMapZoom(10);
-    setCustomTileUrl(data.analysis_result.output_map.tile_url);
-
-    const params = data.parsed_parameters;
-    setLon(params.lon);
-    setLat(params.lat);
-    setStartDate(params.start_date);
-    setEndDate(params.end_date);
-    setAnalysisType(params.analysis_type);
-  } catch (err: any) {
-    showError(err.message || "An error occurred");
-    setRawJson({ error: err.message });
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const data = await response.json();
-  console.log(data);
-} catch (error) {
-  console.error("Error:", error);
-}
+    try {
+      const response = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: naturalQuery }),
+      })
 
       const data = await response.json()
-      
+
       if (!response.ok) {
-        throw new Error(data.detail || 'Failed to process query')
+        throw new Error(data.detail || "Failed to process query")
       }
-      
+
       setResult(data.analysis_result)
-      setRawJson(data)
+      setRawJson(JSON.stringify(data, null, 2)) // Formatted JSON for better readability
       setMapCenter(data.analysis_result.output_map.center_coords)
       setMapZoom(10)
       setCustomTileUrl(data.analysis_result.output_map.tile_url)
-      
-      // Update form fields
+
       const params = data.parsed_parameters
       setLon(params.lon)
       setLat(params.lat)
       setStartDate(params.start_date)
       setEndDate(params.end_date)
       setAnalysisType(params.analysis_type)
-      
-      setLoading(false)
+
     } catch (err: any) {
-      showError(err.message || 'An error occurred')
-      setRawJson({ error: err.message })
+      showError(err.message || "An error occurred")
+      setRawJson(JSON.stringify({ error: err.message }, null, 2))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -207,14 +168,15 @@ export default function GeoAIDashboard() {
       }
       
       setResult(data)
-      setRawJson(data)
+      setRawJson(JSON.stringify(data, null, 2)) // Formatted JSON
       setMapCenter(data.output_map.center_coords)
       setMapZoom(10)
       setCustomTileUrl(data.output_map.tile_url)
-      setLoading(false)
     } catch (err: any) {
       showError(err.message || 'An error occurred')
-      setRawJson({ error: err.message })
+      setRawJson(JSON.stringify({ error: err.message }, null, 2))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -223,7 +185,7 @@ export default function GeoAIDashboard() {
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900 dark:from-slate-950 dark:via-purple-950 dark:to-indigo-950"></div>
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmurlI#dyaWQiKS8+PC9zdmc+')] opacity-20"></div>
-      <div className="absolute top-0 left-0 w-full h-full">
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-blob"></div>
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
@@ -670,9 +632,9 @@ export default function GeoAIDashboard() {
                       <Code className="w-5 h-5 text-cyan-400" />
                       Raw JSON Response
                     </h3>
-                    <pre className="bg-slate-900/90 backdrop-blur-sm text-cyan-100 p-4 rounded-lg overflow-x-auto text-xs max-h-[300px] overflow-y-auto border-2 border-cyan-400/50">
-                      <code>{JSON.stringify(rawJson || { message: "Run an analysis to see the JSON response here." }, null, 2)}</code>
-                    </pre>
+                    <pre className="whitespace-pre-wrap bg-black/10 dark:bg-black/40 p-4 rounded-lg overflow-x-auto text-sm font-mono text-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
+                      {rawJson}
+                      </pre>
                   </div>
                 </CardContent>
               </Card>
@@ -692,6 +654,10 @@ export default function GeoAIDashboard() {
           </Card>
         </div>
       </div>
+      {/* Ensure absolute elements don't block interaction */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .pointer-events-none { pointer-events: none; }
+      `}} />
     </div>
   )
 }
