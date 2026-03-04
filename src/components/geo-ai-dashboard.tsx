@@ -14,7 +14,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Satellite, Sparkles, Sliders, MapPin, Calendar, BarChart3, Image as ImageIcon, Code, Info, Play, Send } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
-import type { Map as LeafletMap } from 'leaflet'
 
 interface AnalysisResult {
   analysis_type: string
@@ -106,13 +105,10 @@ export default function GeoAIDashboard() {
     setError(null)
     setResult(null)
     
-    // Let the user know it's a heavy task
-    setRawJson("Processing high-resolution imagery... This can take up to 3 minutes. Please do not close this window.") 
-
     try {
-      // 🚨 BYPASS VERCEL: Call Cloud Run directly
+      // BYPASS VERCEL: Call Cloud Run directly
       const response = await fetch("https://orbis-nik-backend-864057882351.asia-south1.run.app/api/ask", {
-        method: "POST", // 👈 Make sure this line exists!
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: naturalQuery }),
       })
@@ -130,33 +126,30 @@ export default function GeoAIDashboard() {
         throw new Error(data.detail || data.error || "Failed to process query")
       }
 
-      // 1. Clear the "Processing..." loading text to hide raw data
-    setRawJson(""); 
-
-    // 2. Extract the map data safely (Gemini wraps it in 'analysis_result')
-    if (data.analysis_result) {
-      setResult(data.analysis_result); 
-    } else {
-      setResult(data);
-    }
-        await new Promise(r => setTimeout(r, 10)); 
+      // Safely extract the map data (Gemini wraps it in 'analysis_result')
+      const analysisData = data.analysis_result || data;
+      
+      // Update Results
+      setResult(analysisData);
+      
+      // Update Map
+      if (analysisData.output_map) {
+        setMapCenter(analysisData.output_map.center_coords);
+        setMapZoom(10);
+        setCustomTileUrl(analysisData.output_map.tile_url);
       }
 
-      setResult(data.analysis_result)
-      setMapCenter(data.analysis_result.output_map.center_coords)
-      setMapZoom(10)
-      setCustomTileUrl(data.analysis_result.output_map.tile_url)
-
-      const params = data.parsed_parameters
-      setLon(params.lon)
-      setLat(params.lat)
-      setStartDate(params.start_date)
-      setEndDate(params.end_date)
-      setAnalysisType(params.analysis_type)
+      // Automatically update the manual inputs with what Gemini found
+      if (data.parsed_parameters) {
+        setLon(data.parsed_parameters.lon);
+        setLat(data.parsed_parameters.lat);
+        setStartDate(data.parsed_parameters.start_date);
+        setEndDate(data.parsed_parameters.end_date);
+        setAnalysisType(data.parsed_parameters.analysis_type);
+      }
 
     } catch (err: any) {
       showError(err.message || "An error occurred")
-      setRawJson(JSON.stringify({ error: err.message }, null, 2))
     } finally {
       setLoading(false)
     }
@@ -178,7 +171,7 @@ export default function GeoAIDashboard() {
     
     try {
       const response = await fetch("https://orbis-nik-backend-864057882351.asia-south1.run.app/api/analyze", {
-        method: 'POST', // 👈 Make sure this line exists!
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
       })
@@ -189,13 +182,11 @@ export default function GeoAIDashboard() {
       }
       
       setResult(data)
-      setRawJson(JSON.stringify(data, null, 2)) // Formatted JSON
       setMapCenter(data.output_map.center_coords)
       setMapZoom(10)
       setCustomTileUrl(data.output_map.tile_url)
     } catch (err: any) {
       showError(err.message || 'An error occurred')
-      setRawJson(JSON.stringify({ error: err.message }, null, 2))
     } finally {
       setLoading(false)
     }
@@ -612,7 +603,6 @@ export default function GeoAIDashboard() {
                               <ImageIcon className="w-5 h-5 text-purple-400" />
                               Static Map
                             </h3>
-                            {/* 👉 THE FIX IS APPLIED HERE: Added h-[400px] md:h-[500px] object-cover object-center */}
                             <img
                               src={result.output_map.map_base64_jpg}
                               alt="Static Map"
