@@ -105,6 +105,7 @@ export default function GeoAIDashboard() {
     setLoading(true)
     setError(null)
     setResult(null)
+    setRawJson("") // Clear previous raw JSON
 
     try {
       const response = await fetch("/api/ask", {
@@ -113,14 +114,33 @@ export default function GeoAIDashboard() {
         body: JSON.stringify({ text: naturalQuery }),
       })
 
-      const data = await response.json()
-
+      // If the Next.js API returned a standard JSON error (like a 500 status)
       if (!response.ok) {
-        throw new Error(data.detail || "Failed to process query")
+        const errData = await response.json();
+        throw new Error(errData.detail || "Failed to process query");
       }
 
+      // Handle the streaming response for the live typing effect
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let streamedText = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // Decode the chunk and append it
+          streamedText += decoder.decode(value, { stream: true });
+          setRawJson(streamedText); // Live typing update
+        }
+      }
+
+      // 🚨 CRITICAL STEP: The stream is finished. Now we parse the complete string 
+      // back into a JSON object so we can extract the map coordinates and images.
+      const data = JSON.parse(streamedText);
+
       setResult(data.analysis_result)
-      setRawJson(JSON.stringify(data, null, 2)) // Formatted JSON for better readability
       setMapCenter(data.analysis_result.output_map.center_coords)
       setMapZoom(10)
       setCustomTileUrl(data.analysis_result.output_map.tile_url)
