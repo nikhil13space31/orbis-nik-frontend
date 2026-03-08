@@ -17,17 +17,22 @@ import 'leaflet/dist/leaflet.css'
 
 interface AnalysisResult {
   analysis_type: string
-  summary_value: string
-  date_range: {
+  summary_value: string | number
+  location?: {
+    lat: number
+    lon: number
+  }
+  date_range?: {
     start: string
     end: string
   }
   output_map: {
-    center_coords: [number, number]
+    center_coords?: [number, number]
     tile_url: string
-    map_base64_jpg: string
+    map_base64?: string
+    map_base64_jpg?: string
   }
-  output_chart: {
+  output_chart?: {
     chart_base64_jpg?: string
   }
 }
@@ -106,7 +111,7 @@ export default function GeoAIDashboard() {
     setResult(null)
     
     try {
-      // BYPASS VERCEL: Call Cloud Run directly
+      // Connects directly to your live Render backend
       const response = await fetch("https://orbis-nik-backend.onrender.com/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,9 +137,14 @@ export default function GeoAIDashboard() {
       // Update Results
       setResult(analysisData);
       
-      // Update Map
-      if (analysisData.output_map) {
+      // Update Map - Safely checking for location coordinates
+      if (analysisData.location) {
+        setMapCenter([analysisData.location.lat, analysisData.location.lon]);
+      } else if (analysisData.output_map?.center_coords) {
         setMapCenter(analysisData.output_map.center_coords);
+      }
+      
+      if (analysisData.output_map) {
         setMapZoom(10);
         setCustomTileUrl(analysisData.output_map.tile_url);
       }
@@ -170,6 +180,7 @@ export default function GeoAIDashboard() {
     }
     
     try {
+      // Connects directly to your live Render backend
       const response = await fetch("https://orbis-nik-backend.onrender.com/api/analyze", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,9 +193,19 @@ export default function GeoAIDashboard() {
       }
       
       setResult(data)
-      setMapCenter(data.output_map.center_coords)
+      
+      // Update Map - Safely checking for location coordinates
+      if (data.location) {
+        setMapCenter([data.location.lat, data.location.lon])
+      } else if (data.output_map?.center_coords) {
+        setMapCenter(data.output_map.center_coords)
+      }
+      
       setMapZoom(10)
-      setCustomTileUrl(data.output_map.tile_url)
+      
+      if (data.output_map) {
+        setCustomTileUrl(data.output_map.tile_url)
+      }
     } catch (err: any) {
       showError(err.message || 'An error occurred')
     } finally {
@@ -522,7 +543,7 @@ export default function GeoAIDashboard() {
                         <CardContent className="pt-6">
                           <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold mb-2">Summary Value</p>
                           <p className="text-lg font-bold text-cyan-400">
-                            {result.summary_value}
+                            {result.summary_value || "Visual Output"}
                           </p>
                         </CardContent>
                       </Card>
@@ -531,7 +552,7 @@ export default function GeoAIDashboard() {
                         <CardContent className="pt-6">
                           <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold mb-2">Date Range</p>
                           <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {result.date_range.start} to {result.date_range.end}
+                            {result.date_range?.start || startDate} to {result.date_range?.end || endDate}
                           </p>
                         </CardContent>
                       </Card>
@@ -604,7 +625,7 @@ export default function GeoAIDashboard() {
                               Static Map
                             </h3>
                             <img
-                              src={result.output_map.map_base64_jpg}
+                              src={result.output_map?.map_base64 || result.output_map?.map_base64_jpg || 'https://via.placeholder.com/512x512.png?text=No+Map+Generated'}
                               alt="Static Map"
                               className="w-full h-[400px] md:h-[500px] object-cover object-center rounded-lg border-2 border-purple-400/50 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/40 transition-all duration-300"
                             />
@@ -618,7 +639,7 @@ export default function GeoAIDashboard() {
                               Time-Series Chart
                             </h3>
                             <img
-                              src={result.output_chart.chart_base64_jpg || 'https://via.placeholder.com/512x512.png?text=No+Chart+Generated'}
+                              src={result.output_chart?.chart_base64_jpg || 'https://via.placeholder.com/512x512.png?text=No+Chart+Generated'}
                               alt="Time-Series Chart"
                               className="w-full rounded-lg border-2 border-pink-400/50 shadow-md shadow-pink-500/20 hover:shadow-lg hover:shadow-pink-500/40 transition-all duration-300"
                             />
