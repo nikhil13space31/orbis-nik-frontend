@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+import { MapContainer, Polygon, TileLayer, useMap } from 'react-leaflet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Satellite, Sparkles, Sliders, MapPin, Calendar, BarChart3, Image as ImageIcon, Code, Info, Play, Send } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
+import L from 'leaflet';  // Assuming Leaflet is imported elsewhere
 
 interface AnalysisResult {
   analysis_type: string
@@ -31,6 +32,7 @@ interface AnalysisResult {
     tile_url: string
     map_base64?: string
     map_base64_jpg?: string
+    bounding_box?: [number, number][]
   }
   output_chart?: {
     chart_base64_jpg?: string
@@ -53,7 +55,6 @@ function CustomTileLayer({ url }: { url: string | null }) {
   useEffect(() => {
     if (!url) return
     
-    const L = require('leaflet')
     const tileLayer = L.tileLayer(url, {
       attribution: 'Google Earth Engine'
     })
@@ -67,6 +68,17 @@ function CustomTileLayer({ url }: { url: string | null }) {
   
   return null
 }
+
+// Define BoundsUpdater component
+const BoundsUpdater = ({ bounds }: { bounds: L.LatLngBoundsExpression }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (bounds) {
+      map.fitBounds(bounds);
+    }
+  }, [map, bounds]);
+  return null;  // No render output needed
+};
 
 export default function GeoAIDashboard() {
   // Form states
@@ -522,6 +534,22 @@ export default function GeoAIDashboard() {
                           />
                           <MapUpdater center={mapCenter} zoom={mapZoom} />
                           {customTileUrl && <CustomTileLayer url={customTileUrl} />}
+                          {result?.output_map?.bounding_box && (
+                            <>
+                                <BoundsUpdater bounds={result.output_map.bounding_box} />
+                              <Polygon 
+                                key={JSON.stringify(result.output_map.bounding_box)}
+                                positions={result.output_map.bounding_box} 
+                                pathOptions={{ 
+                                  color: '#06b6d4',      
+                                  fillColor: '#06b6d4',  
+                                  fillOpacity: 0.15,      
+                                  weight: 3              
+                                }} 
+                              />
+                            </>
+                          )}
+                          {/* -------------------------------------- */}
                         </MapContainer>
                       )}
                     </div>
